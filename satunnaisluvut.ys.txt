@@ -1,0 +1,53 @@
+# TKJ-harjoitustyö 2020: Satunnaislukugeneraattori
+
+main:
+    call multiply
+    pushq %rax
+    call multiply
+    pushq %rax
+    call multiply
+    pushq %rax
+    call multiply
+    pushq %rax
+    call multiply
+    pushq %rax
+    halt
+    
+multiply:  # kerrotaan siemenluku itsellään
+    rrmovq %r8,%r9           # kopioidaan siemenluku kertomista varten
+    irmovq $0,%r10           # nollataan tulosrekisteri
+    irmovq $1,%rcx           # maski kertolaskua varten
+    irmovq $0,%rdx           # vertailuarvo
+    irmovq $0x10000000,%rbx  # maksimimaski
+multiply_loop:
+    rrmovq %rcx,%rsi  # kopioidaan maski käyttöä varten
+    andq %r8,%rsi     # "kerrotaan" arvo toisen maskilla
+    subq %rdx,%rsi    # tutkitaan onko tulos nolla
+    je multiply_shift # jos tulos on nolla niin skipataan summaaminen
+    addq %r9,%r10     # jos tulos ei ole nolla niin lisätään arvo lopputulokseen
+multiply_shift:
+    rrmovq %rbx,%rsi  # kopioidaan maksimimaski käyttöä varten
+    addq %rcx,%rcx    # shiftataan maskia vasemmalle
+    addq %r9,%r9      # shiftataan arvoa vasemmalle jotta se voidaan mahdollisesti lisätä lopputulokseen
+    subq %rcx,%rsi    # tutkitaan onko maski maksimissa
+    jg multiply_loop  # jos maski ei ole lopussa niin jatketaan kertolaskua
+remainder:  # poistetaan ylimmät numerot
+    irmovq $1000000,%rbx  # jakaja
+remainder_loop:
+    rrmovq %r10,%rsi      # kopioidaan tulos käyttöä varten
+    subq %rbx,%r10        # vähennetään jakaja jaettavasta
+    jge remainder_loop    # jos ei ole saavutettu nollaa niin jatketaan
+    rrmovq %rsi,%r10      # jos nolla niin kopioidusta tuloksesta lopullinen tulos
+divide:  # poistetaan alimmat numerot
+    irmovq $1,%rdi   # jakolaskua varten tarvitaan 1
+    irmovq $100,%rbx # jakaja
+    irmovq $0,%rax   # nollataan tulosrekisteri
+divive_loop:
+    subq %rbx,%r10   # vähennetään jakaja jaettavasta
+    jge divive_test  # jos ei ole saavutettu nollaa niin jatketaan
+    rrmovq %rax,%r8  # uusi siemenluku
+    rrmovq %r8,%r9   # kopioidaan uusi siemenluku
+    ret
+divive_test:
+    addq %rdi,%rax   # kasvatetaan jakolaskun tulosta yhdellä
+    jmp divive_loop  # palataan jakolasku-looppiin
